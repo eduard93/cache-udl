@@ -8,7 +8,7 @@ Class sc.code [ Abstract ]
 ClassMethod export(generated = 0, system = 0, percent = 0, mapped = 0, mask = "")
 {
 
-	#define export(%code, %file) s sc = $system.OBJ.ExportUDL(%code, %file,"/diffexport") ##continue
+	#define export(%code, %file) s sc = ##class(%Compiler.UDL.TextServices).GetTextAsFile(,%code,%file) ##continue
 								 w:sc "Ok" d:'sc $system.OBJ.DisplayError(sc)
 
 	#define isGenerated(%code) ##class(%RoutineMgr).IsGenerated( %code )
@@ -117,7 +117,13 @@ ClassMethod import(filemask = "*.xml;*.cls;*.mac;*.int;*.inc;*.dfi", qspec = "ck
 				s sc = ##class(%DeepSee.UserLibrary.Utils).%Import( filename, 1, 0, 0, "", .dsloaded )
 			} else {
 				// load classes only
-				s sc = $system.OBJ.Load( filename, "k-d", .err, .loaded)
+				set stream = ##class(%FileCharacterStream).%New()
+				do stream.LinkToFile(filename)
+				if ##class(UDL).IsUDLFile(stream) {
+					set sc = ##class(UDL).LoadUDLFile(stream, ,filename, .loaded)
+				} else {
+					set sc = $system.OBJ.Load( filename, qspec, .err, .loaded)
+				}
 			}
 
 			if verbose $$$log
@@ -143,7 +149,7 @@ ClassMethod import(filemask = "*.xml;*.cls;*.mac;*.int;*.inc;*.dfi", qspec = "ck
 	Q sc
 }
 
-ClassMethod inFilter(ByRef filtermask,filename) as %Boolean
+ClassMethod inFilter(ByRef filtermask, filename) As %Boolean
 {
 	s result=0
 	for 
@@ -158,7 +164,7 @@ ClassMethod inFilter(ByRef filtermask,filename) as %Boolean
 
 /// get the filtermask for the repository.
 /// looks for .gitignore file and applies all the lines to filters
-ClassMethod setIgnore(ByRef filtermask) 
+ClassMethod setIgnore(ByRef filtermask)
 {
 	
 	// working with .gitignore file
@@ -178,7 +184,6 @@ ClassMethod setIgnore(ByRef filtermask)
 	}
 quit
 }
-
 
 /// get or set working directory for export/import source
 ClassMethod workdir(workdir)
@@ -321,4 +326,3 @@ ClassMethod codets(codename, ext)
 }
 
 }
-
